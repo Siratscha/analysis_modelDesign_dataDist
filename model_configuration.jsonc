@@ -1,0 +1,32 @@
+{
+    "model":
+    {
+        "architecture":"vit",
+        "__criterion" :"BCE",
+        "_criterion":"CE",
+        "criterion":"BCELL",
+        "image_size":384,
+        "name":"vit_ros_gender03"
+    },
+    "training":
+    {
+        "learning_rate":0.0001,
+        "batch_size":48,
+        "epochs":9
+    },
+    "data":
+    {
+        "_image_path_workLaptop":"C:/Users/Simon Rankl/JiraAPI/Thesis/modelDesign_bias_CXR/data/MIMICCXR",
+        "_label_path_workLaptop":"C:/Users/Simon Rankl/JiraAPI/Thesis/modelDesign_bias_CXR/data/MIMICCXR/test_samples.csv",
+
+        "_image_path":"C:/Users/rankl/Documents/uni/Thesis/Development/modelDesign_bias_CXR/data/MIMICCXR",
+        "_label_path":"C:/Users/rankl/Documents/uni/Thesis/Development/modelDesign_bias_CXR/data/MIMICCXR/Ed_Sup_Ca_local.csv",
+        "_classes":["Edema","Support Devices","Cardiomegaly"],
+
+        "label_path":"/work/srankl/thesis/development/modelDesign_bias_CXR/data/MIMICCXR/ROS/ros_gender03.csv",
+        "image_path":"/work/srankl/thesis/modelDesign_bias_CXR/data/MIMICCXR/physionet.org/files/mimic-cxr-jpg/2.0.0/files",
+        "classes":["Edema","Cardiomegaly","Atelectasis", "Lung Opacity","Pleural Effusion","Support Devices"],
+        "__classes":["Edema","Cardiomegaly","Support Devices","Atelectasis","Pleural Effusion", "Lung Opacity"]
+    },
+    "cuda_device": "cuda:3"
+}
