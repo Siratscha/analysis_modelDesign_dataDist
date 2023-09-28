@@ -13,6 +13,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 
+# This script modifies the official training example of huggingface to train a text to image pipeline.
+# The original script is available at: https://github.com/huggingface/diffusers/tree/main/examples/text_to_image
+
 import argparse
 import logging
 import math

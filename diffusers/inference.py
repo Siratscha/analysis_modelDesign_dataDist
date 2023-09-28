@@ -1,3 +1,12 @@
+# This script is used during inference after fine tuning the text to image stable diffusion pipeline.
+# It automatically detects how many samples are needed per class and group to reach a threshold (num_samples)
+# For this it uses a csv of a dataset and aggregates number of labels per class and group and substracts that 
+# frequency from the threshold to get the number of samples to be added
+
+# users need to call **determine_num_prompts()** with gender_switch (bool), label_switch(bool) if they want to use specific label subsets, or
+# if they want to generate images for one group (default = female) 
+# gender_switch = True,label_switch = False uses default settings
+
 import torch
 
 from diffusers import AutoencoderKL, StableDiffusionPipeline, UNet2DConditionModel,PNDMScheduler
@@ -11,7 +20,7 @@ import os
 
 import string
 
-model_path = "/work/srankl/thesis/development/modelDesign_bias_CXR/diffusers/roentGen_sd_lessnF"
+model_path = <path to trained stable diffusion model>
 
 unet = UNet2DConditionModel.from_pretrained(model_path + "/checkpoint-9500/unet")
 
@@ -27,6 +36,21 @@ pipe = StableDiffusionPipeline.from_pretrained(model_path, revision="fp16", safe
 
 
 def aggregate(df,labels, byGender):
+    """
+    The function `aggregate` takes a dataframe, a list of column labels, and a boolean flag indicating
+    whether to aggregate by gender, and returns the aggregated values based on the specified columns and
+    grouping.
+    
+    :param df: The input dataframe that you want to aggregate
+    :param labels: The `labels` parameter is a list of column names that you want to aggregate. These
+    column names should exist in the DataFrame `df`
+    :param byGender: The parameter "byGender" is a boolean value that determines whether the aggregation
+    should be performed by gender or not. If "byGender" is set to True, the aggregation will be done
+    separately for each gender. If it is set to False, the aggregation will be done for the entire
+    dataset without
+    :return: the aggregated data based on the specified labels and whether to aggregate by gender or
+    not.
+    """
     # Initialize an empty dictionary to store the aggregation functions
     aggregation_functions = {}
 
@@ -42,6 +66,15 @@ def aggregate(df,labels, byGender):
     return result
 
 def draw_x_times(list, x):
+    """
+    The function "draw_x_times" takes a list and an integer as input, and returns a new list with x
+    randomly chosen elements from the input list.
+    This function is called if a specific amount of genders or labels are to draw randomly
+    
+    :param list: A list of elements from which to randomly choose
+    :param x: The number of times you want to draw an element from the list
+    :return: a list of x elements randomly chosen from the input list.
+    """
     result_list = [random.choice(list) for _ in range(x)]
     return result_list
 
@@ -50,10 +83,30 @@ label_subset = ['Edema','Cardiomegaly','Support Devices','Atelectasis','Pleural 
 gender_tokens = ['female', 'male']
 
 def determine_num_prompts(gender_switch,label_switch, num_samples,label_subset,gender_tokens, data_subset):
-    if not label_switch and not gender_switch:
+    """
+    The function determines the number of prompts, random genders, and random labels based on the given
+    parameters.
+    
+    :param gender_switch: The `gender_switch` parameter determines whether or not to include gender as a
+    factor in determining the number of prompts. If `gender_switch` is `True`, gender will be
+    considered. If `gender_switch` is `False`, gender will not be considered
+    :param label_switch: The `label_switch` parameter determines whether or not to switch the labels. If
+    `label_switch` is `True`, the labels will be switched. If `label_switch` is `False`, the labels will
+    not be switched
+    :param num_samples: The number of samples you want to generate
+    :param label_subset: The `label_subset` parameter is a list of labels that you want to include in
+    the random selection
+    :param gender_tokens: The `gender_tokens` parameter is a list of tokens representing different
+    genders. It could be something like `['female', 'male']` or `['F', 'M']`
+    :param data_subset: The `data_subset` parameter is a subset of data that contains information about
+    different samples or instances. It could be a dataframe or any other data structure that holds the
+    relevant information for each sample
+    :return: three values: num_samples, random_genders, and random_labels.
+    """
+    if label_switch and not gender_switch:
         label_subset = ['Edema','Cardiomegaly','Lung Opacity','Atelectasis']
 
-    if label_switch and not gender_switch:
+    if not label_switch and not gender_switch:
         label_aggregation = aggregate(data_subset,label_subset,False)
         limit = num_samples
         num_samples = 0
@@ -61,20 +114,18 @@ def determine_num_prompts(gender_switch,label_switch, num_samples,label_subset,g
         for label_index in label_subset:
             label_left = label_aggregation[label_index]
             num_samples_dis = int(limit - label_left )
-            #num_samples_dis = 10
             if num_samples_dis > 0:
                 random_labels.extend([label_index]  * num_samples_dis)
                 num_samples += num_samples_dis
-
-
         random_genders = draw_x_times(gender_tokens, num_samples) 
         return num_samples, random_genders, random_labels
+    
     if gender_switch and not label_switch:
         random_labels = draw_x_times(label_subset, num_samples)
         # switch for male or female
         random_genders = ['female'] * num_samples
         return num_samples, random_genders, random_labels
-    #if label_switch and gender_switch:
+
     label_aggregation = aggregate(data_subset,label_subset,True)
     gender_labels = ['F', 'M']
     random_genders = []
@@ -94,6 +145,17 @@ def determine_num_prompts(gender_switch,label_switch, num_samples,label_subset,g
     return num_samples, random_genders, random_labels
 
 def generate_random_string(num_samples):
+    """
+    The function `generate_random_string` generates a specified number of random strings consisting of
+    lowercase letters and digits, with dashes inserted after every 8 characters.
+    These resemble the random DICOM file names in MIMIC-CXR.
+    
+    :param num_samples: The parameter `num_samples` represents the number of random strings you want to
+    generate
+    :return: The function `generate_random_string` returns a list of randomly generated strings. Each
+    string consists of groups of 8 characters separated by dashes. The number of strings in the list is
+    determined by the `num_samples` parameter.
+    """
     random_strings = []
     for i in range(num_samples):
 
@@ -108,9 +170,26 @@ def generate_random_string(num_samples):
 
     return random_strings
 
-def store_img(folder,num_samples,gender_list, label_list, dicom_ids):
-    #cwd = r"C:\Users\rankl\Documents\uni\Thesis\Development\modelDesign_bias_CXR\data\MIMICCXR"
-    cwd = "/work/srankl/thesis/modelDesign_bias_CXR/data/MIMICCXR/physionet.org/files/mimic-cxr-jpg/2.0.0/files"
+def store_img(folder,num_samples,gender_list, label_list, dicom_ids, cwd_img):
+    """
+    The function `store_img` takes in a folder name, number of samples, gender list, label list, dicom
+    IDs, and current working directory for images, and saves images in the specified directory with the
+    given file names.
+    We follow the structure of the file tree in MIMIC-CXR
+    
+    :param folder: The folder parameter is the name or identifier of the folder where the images will be
+    stored
+    :param num_samples: The number of samples or images to be stored
+    :param gender_list: The `gender_list` parameter is a list that contains the gender information for
+    each sample. It is used to generate the prompt for each image
+    :param label_list: The `label_list` parameter is a list that contains the labels for each image. It
+    is used to create the prompt for generating the image
+    :param dicom_ids: The `dicom_ids` parameter is a list of unique identifiers for each DICOM image.
+    These identifiers are used to name the saved image files
+    :param cwd_img: The parameter `cwd_img` is the current working directory where the images will be
+    stored
+    """
+    cwd = cwd_img
     for i in range(num_samples):
         combination = (gender_list[i], label_list[i])
         #gender_list.append(combination[0][0].upper())
@@ -127,11 +206,28 @@ def store_img(folder,num_samples,gender_list, label_list, dicom_ids):
         os.makedirs(os.path.dirname(path), exist_ok=True)
         image.save(path)
 
+
 def store_sample(folder,num_samples, dicom_ids, gender_list, label_list, label_subset):
+    """
+    The function `store_sample` takes in various inputs such as folder, number of samples, dicom ids,
+    gender list, label list, and label subset, and returns a combined dataframe with the provided
+    inputs.
+    
+    :param folder: The folder parameter is the name of the folder where the samples will be stored
+    :param num_samples: The number of samples to generate in the dataframe
+    :param dicom_ids: A list of DICOM IDs for each sample. DICOM IDs are unique identifiers for medical
+    images
+    :param gender_list: A list of genders for each sample
+    :param label_list: The `label_list` parameter is a list of labels associated with each sample
+    :param label_subset: The `label_subset` parameter is a list of labels that you want to include in
+    the final dataframe. It is used to filter the labels and include only those that are present in the
+    `label_subset` list
+    :return: a combined dataframe that includes the subject_id, study_id, gender, dicom_id, split, and
+    one-hot encoded labels.
+    """
     
     folder_list = [folder] * num_samples
     df = pd.DataFrame({'subject_id': folder_list, 'study_id': folder_list})
-    #df['subject_id'] = df['study_id'] = folder
     
     first_letters_list = [name[0].upper() for name in gender_list]
     df['gender'] = first_letters_list
@@ -149,19 +245,17 @@ def store_sample(folder,num_samples, dicom_ids, gender_list, label_list, label_s
 
     return combined_df
 
-#samples_folder = ['20000010','20030000','20050000', '2060000', '20070000'] # , '20020000', '20030000'
-#samples_folder = ['21005000', '21010000', '21020000']
-#samples_folder = ['22023000', '22026000', '22030000', '22035000', '22040000', '22045000']
 
-folder = '22030000' #samples_folder[1]
+
+folder = '22030000' 
 num_samples = int(folder[-5:])
-data_subset = pd.read_csv(r"/work/srankl/thesis/development/modelDesign_bias_CXR/data/MIMICCXR/22030000.csv")#data_subset.csv
+data_subset = pd.read_csv(<path to csv>)
 training_data = data_subset.loc[data_subset["split"] == "train"]
-num_samples, random_genders, random_labels = determine_num_prompts(gender_switch = True,label_switch = True, num_samples = num_samples, label_subset=label_subset,gender_tokens=gender_tokens, data_subset=training_data)
+num_samples, random_genders, random_labels = determine_num_prompts(gender_switch = False,label_switch = False, num_samples = num_samples, label_subset=label_subset,gender_tokens=gender_tokens, data_subset=training_data)
 x_ray_files = generate_random_string(num_samples)
 output_df = store_sample(folder=folder,num_samples=num_samples,dicom_ids=x_ray_files, gender_list=random_genders,label_list=random_labels, label_subset=label_subset)
 
-#pd.read_csv(r"C:\Users\rankl\Documents\uni\Thesis\Development\modelDesign_bias_CXR\data\MIMICCXR\data_subset.csv")
+
 
 if not output_df.columns.equals(data_subset.columns):
     print("Warning: The column order does not match between output_df and data_subset.")
@@ -173,8 +267,10 @@ combined_df = pd.concat([data_subset, output_df], ignore_index=True, verify_inte
 # data_subset = combined_df
 
 # If you want to save the combined DataFrame to a new CSV file:
-cwd = r'/work/srankl/thesis/development/modelDesign_bias_CXR/data/MIMICCXR/'
+cwd = <path to storage location of new CSV>
 path = os.path.join(cwd,folder)  + ".csv"
 combined_df.to_csv(path, index=False)
 
-store_img(folder=folder, num_samples=num_samples,gender_list=random_genders,label_list=random_labels,dicom_ids=x_ray_files)
+cwd_img = <path to image storage location>
+
+store_img(folder=folder, num_samples=num_samples,gender_list=random_genders,label_list=random_labels,dicom_ids=x_ray_files, cwd_img = cwd_img)

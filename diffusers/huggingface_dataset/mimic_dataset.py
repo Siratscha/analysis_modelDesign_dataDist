@@ -11,19 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# TODO: Address all TODOs and remove all explanatory comments
-"""TODO: Add a description here."""
 
 
-import csv
 import json
 import os
 
 import datasets
 
 
-# TODO: Add BibTeX citation
-# Find for instance the citation on arxiv or on the dataset repo/website
 _CITATION = """\
 @misc{Johnson.2019,
  abstract = {The MIMIC Chest X-ray (MIMIC-CXR) Database v1.0.0 is a large publicly available dataset of chest radiographs with structured labels. The dataset contains 371,920 images corresponding to 224,548 radiographic studies performed at the Beth Israel Deaconess Medical Center in Boston, MA. The dataset is de-identified to satisfy the US Health Insurance Portability and Accountability Act of 1996 (HIPAA) Safe Harbor requirements. Protected health information (PHI) has been removed. The dataset is intended to support a wide body of research in medicine including image understanding, natural language processing, and decision support.},
@@ -36,30 +31,26 @@ _CITATION = """\
 }
 """
 
-# TODO: Add description of the dataset here
-# You can copy an official description
+
 _DESCRIPTION = """\
 This script is designed to load local images on a server stored in the structure defined by the Dataset creators.
 The script should also combine text with the images to allow the training of a image text stable diffusion model
 After signing the data usage agreement, being a credentialed user on physionet and completing the required trainings, the user can open URL below.
 """
 
-# TODO: Add a link to an official homepage for the dataset here
+
 _HOMEPAGE ="https://mimic-cxr.mit.edu/" 
 
-# TODO: Add the licence for the dataset here if you can find it
+
 _LICENSE = "https://physionet.org/content/mimic-cxr/view-license/2.0.0/"
 
-# TODO: Add link to the official dataset URLs here
-# The HuggingFace Datasets library doesn't host the datasets but only points to the original files.
-# This can be an arbitrary nested dict/list of URLs (see below in `_split_generators` method)
+
 _URLS = {
-    #"first_domain": "https://physionet.org/content/mimic-cxr/2.0.0/",
     "first_domain":["/work/srankl/thesis/development/modelDesign_bias_CXR/diffusers/huggingface_dataset"] #r"C:\Users\rankl\Documents\uni\Thesis\Development\modelDesign_bias_CXR\diffusers\huggingface_dataset"[r"C:\Users\rankl\Documents\uni\Thesis\Development\modelDesign_bias_CXR\data\MIMICCXR\huggingface_dataset"]
 }
 
 
-# TODO: Name of the dataset usually matches the script name with CamelCase instead of snake_case
+
 class MIMICCXR(datasets.GeneratorBasedBuilder):
     """Builder Config for MIMICCXR"""
     VERSION = datasets.Version("1.1.0")

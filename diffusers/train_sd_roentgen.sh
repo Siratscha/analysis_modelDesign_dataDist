@@ -1,4 +1,6 @@
 #!/bin/sh
+# code from: https://huggingface.co/docs/diffusers/training/text2image to fine tune the stable diffusion pipeline
+# we stick to the default parameters because there were issues for example with mixed_precision
 
 export CUDA_VISIBLE_DEVICES=3
 
