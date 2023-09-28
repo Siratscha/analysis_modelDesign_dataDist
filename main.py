@@ -1,13 +1,9 @@
-# %%
-#from utils import *
-
-
-#from data.padchest.dataset import Padchest
-#from data.MIMICCXR.mimic_cxr_dataset import MIMICCXR
+# trains an image classifier: either densenet or vit
+# outputs the standard deviation and the test results
+# parameters are to be defined in "model_configuration.jsonc"
 
 from train import train
 from stats import test_predictions, print_loss_curve
-#from trainer_vit import trainer_vit
 
 
 import json
@@ -37,6 +33,10 @@ image_size = configuration["model"]["image_size"]
 
 # %%
 def main():
+    """
+    The main function calculates the mean and standard deviation of the area under the ROC curve (AUC)
+    for a given model and dataset.
+    """
     
     mean_aucs =  np.zeros((2, len(classes_conf)))
     std_aucs = np.zeros((2, len(classes_conf)))
@@ -93,10 +93,10 @@ def main():
 
 
 if __name__ == "__main__":
-    #main()
-    #path = r"C:\Users\rankl\Documents\uni\Thesis\Development\modelDesign_bias_CXR\outputs\densenet\dense_strd_dev_total_subset_stats.pth"
-    path = r"C:\Users\rankl\Documents\uni\Thesis\Development\modelDesign_bias_CXR\outputs\vit\vit_total_subset_stats.pth"
-    print_loss_curve(path)
+    #main() #<- uncomment to train a model
+    path = <path to trained model>
+    
+    #print_loss_curve(path) #<- uncomment to see the statistics of a model 
 
     
 

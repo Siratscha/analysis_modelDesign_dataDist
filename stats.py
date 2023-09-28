@@ -29,22 +29,22 @@ def print_loss_curve(path):
     fig, ax1 = plt.subplots()
     
     # Plotting loss curves
-    color = '0.1'  # Grayscale color
-    ax1.set_xlabel('Epoch', fontsize=24)  # Adjust font size
-    ax1.set_ylabel('Loss', color=color, fontsize=24)  # Adjust font size
+    color = '0.1'  
+    ax1.set_xlabel('Epoch', fontsize=24)  
+    ax1.set_ylabel('Loss', color=color, fontsize=24)  
     ax1.plot(range(num_epochs), val_losses.detach().numpy(), label='Val. loss', color=color)
-    ax1.plot(range(num_epochs), train_losses.detach().numpy(), label='Train loss', color='0.6')  # Lighter grayscale
-    #ax1.tick_params(axis='y', labelcolor=color, labelsize=16)
+    ax1.plot(range(num_epochs), train_losses.detach().numpy(), label='Train loss', color='0.6')  
+
     ax1.tick_params(axis='both', labelcolor=color, labelsize=20)
 
-    # Plotting AUROC curves
+
     ax2 = ax1.twinx()
 
-    ax2.set_ylabel('AUC ROC', color=color, fontsize=24)  # Adjust font size
+    ax2.set_ylabel('AUC ROC', color=color, fontsize=24)  
     ax2.plot(range(num_epochs), val_aucs.detach().numpy(), label='Val. AUC-ROC', color='0.3', ls='--')
     ax2.tick_params(axis='y', labelcolor=color, labelsize=20)
 
-    # Shrink current axis's height by 10% on the bottom
+
     box = ax1.get_position()
     ax1.set_position([box.x0, box.y0 + box.height * 0.1,
                     box.width, box.height * 0.9])
@@ -57,8 +57,7 @@ def print_loss_curve(path):
 
     # Legend and title with adjusted font size
     fig.tight_layout()
-    #fig.legend(loc='lower center', fontsize=20)  # Adjust font size
-    #plt.title('Loss and AUROC Curves', fontsize=20)  # Adjust font size
+
 
     # Display the plot
     plt.show()
@@ -81,7 +80,7 @@ def test_predictions(path2model, input_csv,  PATH_TO_IMAGES, classes, device, ge
 
 
 
-    test_dataset = MIMICCXR(test_df, PATH_TO_IMAGES, classes=classes, model_type=modeltype)
+    test_dataset = MIMICCXR(test_df, PATH_TO_IMAGES, classes=classes)
     test_dataset.transform = transforms.Compose([ 
                                     transforms.Resize(image_size),
                                     transforms.CenterCrop(image_size),

@@ -30,24 +30,24 @@ def train(input_csv,  PATH_TO_IMAGES, classes, epochs,criterion,batch_size,model
     merged_df = pd.read_csv(input_csv)
 
     train_df = merged_df[merged_df['split'] == 'train']
-    #train_df = train_df.sample(frac=0.05)
+
     val_df = merged_df[merged_df['split'] == 'validate']
     
 
 
-    # Training parameters
+    # Parameters for training
     BATCH_SIZE = batch_size
 
     num_classes = len(classes)
 
-    WORKERS = 10  # mean: how many subprocesses to use for data loading.
-    num_epochs = epochs  # number of epochs to train for (if early stopping is not triggered)
+    WORKERS = 10  
+    num_epochs = epochs  
 
     random_seed = random.randint(0,100)
     np.random.seed(random_seed)
     torch.manual_seed(random_seed)  
 
-    train_dataset = MIMICCXR(train_df, PATH_TO_IMAGES, classes, model_type=modeltype)
+    train_dataset = MIMICCXR(train_df, PATH_TO_IMAGES, classes)
     train_dataset.transform = transforms.Compose([
                                     transforms.RandomHorizontalFlip(),
                                     transforms.RandomRotation(15),
@@ -58,7 +58,7 @@ def train(input_csv,  PATH_TO_IMAGES, classes, epochs,criterion,batch_size,model
                                     normalize
                                 ])
 
-    val_dataset = MIMICCXR(val_df, PATH_TO_IMAGES, classes, model_type=modeltype)
+    val_dataset = MIMICCXR(val_df, PATH_TO_IMAGES, classes)
     val_dataset.transform = transforms.Compose([ 
                                     transforms.Resize(image_size),
                                     transforms.CenterCrop(image_size),
@@ -88,8 +88,8 @@ def train(input_csv,  PATH_TO_IMAGES, classes, epochs,criterion,batch_size,model
         val_losses = torch.tensor([])
         val_auc_scores = torch.tensor([])
 
-    
-    if mode == 'resume':#and modeltype == 'densenet':
+    # load state of model if we want to resume training
+    if mode == 'resume':
         file_name_model = str(model_name) + '.pth'
         
         subfolder = 'outputs/weights'
@@ -100,7 +100,6 @@ def train(input_csv,  PATH_TO_IMAGES, classes, epochs,criterion,batch_size,model
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer = checkpoint['optimizer']
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        #epoch = checkpoint['epoch']
 
         file_name_stats = str(model_name) + '_stats.pth'
         subfolder_stats = 'outputs'
@@ -192,6 +191,8 @@ def train(input_csv,  PATH_TO_IMAGES, classes, epochs,criterion,batch_size,model
 
     print('Finished Training')
 
+
+# training loop from https://github.com/mlmed/torchxrayvision
 def train_epoch(device, train_loader, optimizer, criterion, model):
     model.train()
     avg_losses = []
@@ -228,7 +229,7 @@ def train_epoch(device, train_loader, optimizer, criterion, model):
 
     return np.mean(avg_losses)    
            
-
+# validation loop from https://github.com/mlmed/torchxrayvision
 def valid_epoch(val_loader, device, model, criterion, num_classes):
     model.eval()
     avg_loss = []
