@@ -37,7 +37,7 @@ def main():
     The main function calculates the mean and standard deviation of the area under the ROC curve (AUC)
     for a given model and dataset.
     """
-    
+    # initialize output arrays
     mean_aucs =  np.zeros((2, len(classes_conf)))
     std_aucs = np.zeros((2, len(classes_conf)))
     aucs_scores = [[],[]]
@@ -50,6 +50,8 @@ def main():
     for i in range(2):
         train(labels, image_path, classes=classes_conf, epochs=epochs_conf,batch_size=batch_size, 
             mode= "new", device= cuda_device, lr=lr,criterion=criterion, modeltype=model, model_name =model_name, image_size=image_size)
+        
+        # calculate the micro AUC-ROC value per gender
         for j,gender in enumerate(genders):
             task_aucs, gender= test_predictions(subfolder_weights, labels, image_path, classes=classes_conf,device=cuda_device,gender=gender,modeltype=model, image_size=image_size)
             aucs_scores[j].append(task_aucs)
@@ -57,7 +59,7 @@ def main():
             
     mean_aucs = mean_aucs/(i + 1)
 
-    # Compute the standard deviation
+    # Compute the standard deviation and write to csv
     for i in range(len(aucs_scores)):
         mean_auroc = np.array(mean_aucs[i])
 

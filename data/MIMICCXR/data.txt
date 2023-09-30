@@ -1,0 +1,3 @@
+the merged csv file should look something like this
+subject_id,study_id,gender,dicom_id,split,Edema,Cardiomegaly,Support Devices,Atelectasis,Pleural Effusion,Lung Opacity
+99999999,99999999,F,d1784be9-efbfbf12-7fa5d772-d92de423-05c4b69c,train,0.0,1.0,0.0,0.0,0.0,0.0

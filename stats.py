@@ -1,3 +1,6 @@
+# this script is called from the main.py script after training the model to calculate the AUC-ROC values
+
+
 import torch
 import matplotlib.pyplot as plt
 
@@ -16,8 +19,15 @@ import pandas as pd
 from tqdm import tqdm
 
 
-
+# 
 def print_loss_curve(path):
+    """
+    The function `print_loss_curve` plots the loss curves and AUC-ROC curve for a given path to a
+    checkpoint file.
+    
+    :param path: The `path` parameter is the file path to the checkpoint file that contains the loss and
+    AUC ROC values for training and validation
+    """
     checkpoint = torch.load(path)
     train_losses = checkpoint["train_losses"]
     val_losses = checkpoint["val_losses"]
@@ -64,9 +74,33 @@ def print_loss_curve(path):
 
 
 
-#print_loss_curve()
-
+# test loop from https://github.com/mlmed/torchxrayvision
 def test_predictions(path2model, input_csv,  PATH_TO_IMAGES, classes, device, gender,modeltype, image_size = 256):
+    """
+    The function `test_predictions` takes in a path to a trained model, an input CSV file, a path to a
+    directory containing images, a list of classes, a device (CPU or GPU), a gender, a model type, and
+    an image size. It then loads the test dataset, loads the trained model, performs inference on the
+    test dataset, calculates the AUC scores for each task, and returns the AUC scores and the gender.
+    
+    :param path2model: The path to the saved model file
+    :param input_csv: The path to the CSV file containing the dataset information, including the split
+    (train, test, etc.) and gender information
+    :param PATH_TO_IMAGES: The `PATH_TO_IMAGES` parameter is the path to the directory where the images
+    are stored. It is used to load the images for prediction
+    :param classes: The `classes` parameter is a list of class labels for the classification task. It
+    represents the different categories or classes that the model is trained to predict
+    :param device: The "device" parameter specifies whether to use a GPU or CPU for running the model.
+    It can take values like "cuda" or "cpu"
+    :param gender: The "gender" parameter in the function "test_predictions" is used to specify the
+    gender for which the predictions are being made. It is a string that can take two values: "male" or
+    "female". This parameter is used to filter the data from the input CSV file and select only the
+    :param modeltype: The `modeltype` parameter is not used in the given code. It is not clear what it
+    represents or how it is used in the function
+    :param image_size: The `image_size` parameter is the size to which the input images will be resized
+    before being fed into the model. It is set to 256 pixels in the given code, defaults to 256
+    (optional)
+    :return: The function `test_predictions` returns two values: `task_aucs` and `gender`.
+    """
     normalize = transforms.Normalize(mean=[0.485],
                                      std=[0.229])
     

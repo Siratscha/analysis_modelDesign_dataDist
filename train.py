@@ -22,6 +22,37 @@ from sklearn.metrics import  roc_auc_score
 
 def train(input_csv,  PATH_TO_IMAGES, classes, epochs,criterion,batch_size,model_name, modeltype = 'densenet', device = 'Optional', 
         lr = 0.0001,image_size=256, mode = 'new'):
+    """
+    The function trains a model using the given input CSV file, image path, classes, epochs, criterion,
+    batch size, model name, model type, device, learning rate, image size, and mode.
+    
+    :param input_csv: The path to the CSV file containing the image file names and their corresponding
+    labels
+    :param PATH_TO_IMAGES: The path to the directory where the images are stored
+    :param classes: The `classes` parameter is a list of the class labels for your classification
+    problem. 
+    :param epochs: The number of times the entire dataset will be passed through the model during
+    training
+    :param criterion: The criterion is the loss function used during training. It measures how well the
+    model is performing and guides the optimization process. defaults to BCELL
+    :param batch_size: The batch size is the number of training examples used in one iteration of the
+    training algorithm. It determines how many samples are processed before the models parameters are
+    updated
+    :param model_name: The name of the model that will be saved after training
+    :param modeltype: The modeltype parameter specifies the type of model architecture to be used for
+    training. The default value is 'densenet', which refers to the DenseNet architecture. 
+    :param device: The device parameter specifies whether to use a GPU or CPU for training. It is an
+    optional parameter and if not provided, the code will automatically check if a GPU is available and
+    use it for training if available, otherwise it will use the CPU, defaults to Optional (optional)
+    :param lr: The learning rate for the optimizer. It determines how quickly the model learns from the
+    training data
+    :param image_size: The size of the input images. It is used to resize the images to a specific size
+    before training, defaults to 256 (optional)
+    :param mode: The mode parameter determines whether to train a new model or continue training an
+    existing model. If mode is set to 'new', a new model will be created and trained from scratch. If
+    mode is set to 'resume', an existing model will be loaded and training will continue from where it
+    left off, defaults to new (optional)
+    """    
 
     normalize = transforms.Normalize(mean=[0.485],
                                      std=[0.229])
@@ -191,8 +222,11 @@ def train(input_csv,  PATH_TO_IMAGES, classes, epochs,criterion,batch_size,model
 
     print('Finished Training')
 
+# training loop from https://github.com/mlmed/torchxrayvision` indicates that the code
+# for the training loop in the `train_epoch` function is taken from the GitHub repository
+# `torchxrayvision` by `mlmed`. This code is used to train the model during each epoch of the training
+# process.
 
-# training loop from https://github.com/mlmed/torchxrayvision
 def train_epoch(device, train_loader, optimizer, criterion, model):
     model.train()
     avg_losses = []

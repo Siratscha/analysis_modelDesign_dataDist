@@ -9,6 +9,7 @@
 
 import torch
 
+# clone diffusers with git clone https://github.com/huggingface/diffusers.git
 from diffusers import AutoencoderKL, StableDiffusionPipeline, UNet2DConditionModel,PNDMScheduler
 from transformers import AutoTokenizer, AutoModel, CLIPTokenizerFast, CLIPTokenizer
 from transformers import CLIPImageProcessor
