@@ -16,8 +16,7 @@
     {
         "label_path":<path to labels>,
         "image_path":<path to image root folder>,
-        "classes":["Edema","Cardiomegaly","Atelectasis", "Lung Opacity","Pleural Effusion","Support Devices"],
-        "__classes":["Edema","Cardiomegaly","Support Devices","Atelectasis","Pleural Effusion", "Lung Opacity"]
+        "classes":["Edema","Cardiomegaly","Atelectasis", "Lung Opacity","Pleural Effusion","Support Devices"]
     },
     "cuda_device": "cuda:3"
 }
