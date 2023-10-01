@@ -1,8 +1,12 @@
+# utils script to extract the impression section in the medical reports
+# 
+
 from transformers import CLIPTokenizer
 import os
 import pandas as pd
 import re
 import ast
+import json
 
 
 tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-large-patch14")
@@ -10,6 +14,17 @@ tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-large-patch14")
 
 
 def extract_impression(gender, file_path):
+    """
+    The function `extract_impression` takes a gender and a file path as input, reads the content of the
+    file, extracts the Impression section from the medical report using regular expressions, and returns
+    a list of impressions with the gender prefix.
+    
+    :param gender: The gender of the patient. It can be either "M" for male or "F" for female
+    :param file_path: The file path is the location of the medical report file that you want to extract
+    the impression from
+    :return: The function `extract_impression` returns a list of impressions extracted from a medical
+    report. Each impression is prefixed with the gender (either "male -" or "female -").
+    """
     if gender == "M":
         gender = "male -"
     else:
@@ -27,6 +42,7 @@ def extract_impression(gender, file_path):
             matches = re.findall(r'FINDINGS:(.*?)(?=^$|\Z)', content, re.MULTILINE | re.DOTALL)
             impressions = [gender + match.replace('\n', '').strip() for match in matches]
         
+        # sometimes the Header "Impression" is missing. Then we use a workaround and extract the text before "Notification" section which refers to "Impression" again
         if len(impressions) > 0:
             # Find the index of the "NOTIFICATION" section
             notification_index = impressions[0].find("NOTIFICATION")
@@ -38,6 +54,16 @@ def extract_impression(gender, file_path):
         return impressions
 
 def filter_impressions(impressions):
+    """
+    The function `filter_impressions` takes a list of impressions, tokenizes the first impression, and
+    returns the original impression if it has a length of at least 7 characters and the tokenized
+    impression has fewer than 77 tokens. Otherwise, it returns an empty list.
+    
+    :param impressions: The parameter "impressions" is expected to be a list of strings
+    :return: The function `filter_impressions` returns either the original impression or an empty list,
+    depending on certain conditions.
+    """
+    # max tokens refers to the limit of the CLIP tokenizer. in this case it's 77
     MAX_TOKENS = 77
     impressions = ast.literal_eval(impressions)
     if  len(impressions) > 0: 
@@ -52,88 +78,60 @@ def filter_impressions(impressions):
     
 
 
-def store_imp():
-    samples = pd.read_csv(r"C:\Users\rankl\Documents\uni\Thesis\Development\modelDesign_bias_CXR\diffusers\huggingface_dataset\full_labels_lessNoFinding.csv")
-    i = 0
-    result_dict = {}
-    impression_list = []
-    img_paths = []
-    limit = 50000
-    for i, item in samples.iterrows():
-        if i % limit == 0:
-            print(i)
-        img_dir = "/work/srankl/thesis/modelDesign_bias_CXR/data/MIMICCXR/physionet.org/files/mimic-cxr-jpg/2.0.0/files"
-        dir = r"C:\Users\rankl\Documents\uni\Thesis\Development\modelDesign_bias_CXR\data\MIMICCXR\mimic-cxr-reports\files"
-        folder, subject_id, study_id = str(int(item["subject_id"]))[:2],  str(int(item["subject_id"])), str(int(item["study_id"]))
-        file_path = os.path.join(dir, "p" + folder, "p" + subject_id, "s" + study_id + ".txt")
-        img_file_name = str(item["dicom_id"]) + ".jpg"
-        image_file_path = os.path.join(img_dir, "p" + folder, "p" + subject_id, "s" + study_id, img_file_name)
-
-        impression_list.append(extract_impression(item["gender"],file_path))
-        img_paths.append(image_file_path)
-
-
-    samples["impressions"] = pd.Series(impression_list[:len(samples)])
-    samples["image_paths"] = pd.Series(img_paths[:len(samples)]) 
-    return samples
-
-    
-
-
-#samples = store_imp()
-#samples.to_csv(r"C:\Users\rankl\Documents\uni\Thesis\Development\modelDesign_bias_CXR\diffusers\huggingface_dataset\less_NoFindings_fullAP_PA.csv", index = False, sep='|')
-samples = pd.read_csv(r"C:\Users\rankl\Documents\uni\Thesis\Development\modelDesign_bias_CXR\diffusers\huggingface_dataset\less_NoFindings_fullAP_PA.csv", delimiter="|")
+samples = pd.read_csv(<path to csv containing the labels and image paths>, delimiter="|")
 samples["filtered_impressions"] = samples["impressions"].apply(lambda x: filter_impressions(x))
-samples.to_csv(r"C:\Users\rankl\Documents\uni\Thesis\Development\modelDesign_bias_CXR\diffusers\huggingface_dataset\less_NoFindings_fullAP_PA.csv", index = False, sep='|')
+samples.to_csv(<path to store filtered csv>, index = False, sep='|')
 
 
-#samples = pd.read_csv(r"C:\Users\rankl\Documents\uni\Thesis\Development\modelDesign_bias_CXR\diffusers\huggingface_dataset\total_AP_PA_ds.csv")
 
-#impressions_df = pd.read_csv(r"C:\Users\rankl\Documents\uni\Thesis\Development\modelDesign_bias_CXR\diffusers\huggingface_dataset\less_NoFindings_fullAP_PA.csv", delimiter= "|")
 impressions_df = samples
 impressions_df.dropna(subset=['image_paths', 'filtered_impressions'], inplace=True)
 mask = impressions_df['filtered_impressions'].str.contains(r'\[\]')
 
 # Drop the rows where the column contains the string '[]'
 impressions_df = impressions_df[~mask]
-#impressions_df.to_csv(r"C:\Users\rankl\Documents\uni\Thesis\Development\modelDesign_bias_CXR\test_df_export.csv", index = False, sep='|')
 
-print(len(impressions_df))
-import json
+#print(len(impressions_df))
+
+
 
 def create_jsonl_splits(impressions_df):
+    """
+    The function `create_jsonl_splits` takes an impressions dataframe and splits it into separate train,
+    test, and validate groups, then creates separate JSONL files for each group.
+    
+    :param impressions_df: impressions_df is a pandas DataFrame that contains the data for creating the
+    JSONL splits. It should have the following columns:
+    """
     # Define the splits for creating separate files
     splits = ["train", "test", "validate"]
 
-    # Group the DataFrame by split
     split_groups = impressions_df.groupby("split")
 
-    # Iterate over the splits
     for split in splits:
-        # Get the corresponding split group
+        
         split_group = split_groups.get_group(split)
         
-        # Create a list to store the examples
         examples = []
         
-        # Iterate over the rows in the split group
+       
         for _, row in split_group.iterrows():
-            # Create an example dictionary with "image" and "text" fields
+            # Create a dictionary with "image" and "text" fields
             example = {
                 "image": row["image_paths"],
                 "text": row["filtered_impressions"]
             }
             
-            # Append the example to the list
+            
             examples.append(example)
         
-        # Create the file path for the split
+        
         file_path = f"{split}.jsonl"
         
-        # Write the examples to the .jsonl file
+        # Write the samples to the .jsonl file
         with open(file_path, "w") as file:
             for example in examples:
-                # Write each example as a separate line in the file
+                # Write each sample as a separate line in the file
                 file.write(json.dumps(example) + "\n")
 
 create_jsonl_splits(impressions_df)

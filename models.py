@@ -7,13 +7,13 @@ class DenseNet121(nn.Module):
     def __init__(self, N_LABELS):
         super(DenseNet121, self).__init__()
         self.densenet = models.densenet121(weights='DEFAULT')
-        # include conv2d layer to take only one channel
+        # include conv2d layer to take only one image channel
         self.densenet.features.conv0 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3)
         
         num_ftrs = self.densenet.classifier.in_features
 
         
-
+        # define x number of labels adjustable via labels in main scripts 
         self.densenet.classifier = nn.Sequential(nn.Linear(num_ftrs, N_LABELS), nn.Sigmoid())
 
 

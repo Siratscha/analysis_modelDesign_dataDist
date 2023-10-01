@@ -245,7 +245,7 @@ def train_epoch(device, train_loader, optimizer, criterion, model):
             
             loss = torch.zeros(1).to(device).float()
             for task in range(labels.shape[1]):
-                task_output = outputs.logits[:,task] #outputs[:,task] outputs.logits
+                task_output = outputs.logits[:,task] #outputs[:,task] outputs.logits  # <- remove logits if training densenet
                 task_label = labels[:,task]
                 mask = ~torch.isnan(task_label)
                 task_output = task_output[mask]
@@ -282,7 +282,7 @@ def valid_epoch(val_loader, device, model, criterion, num_classes):
             outputs = model(images)
             loss = torch.zeros(1).to(device).double()
             for task in range(labels.shape[1]):
-                task_output = outputs.logits[:,task] #outputs[:,task]
+                task_output = outputs.logits[:,task] #outputs[:,task] # <- remove logits if training densenet
                 task_label = labels[:,task]
                 mask = ~torch.isnan(task_label)
                 task_output = task_output[mask]

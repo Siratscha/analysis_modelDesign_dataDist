@@ -158,7 +158,7 @@ def test_predictions(path2model, input_csv,  PATH_TO_IMAGES, classes, device, ge
             outputs = model(images)
             
             for task in range(labels.shape[1]):
-                task_output = outputs.logits[:,task]
+                task_output = outputs.logits[:,task] # <- remove logits if training densenet
                 task_label = labels[:,task]
                 mask = ~torch.isnan(task_label)
                 task_output = task_output[mask]
